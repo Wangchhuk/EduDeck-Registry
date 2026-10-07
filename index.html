@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile Registry</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              200: '#c7d2fe',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @keyframes slideInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .card-animate {
+      animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(99, 102, 241, 0.4);
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(99, 102, 241, 0.7);
+    }
+  </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 min-h-screen font-sans flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+          <i class="fa-solid fa-graduation-cap text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-tight">EduDeck Registry</h1>
+          <p class="text-xs text-slate-500">Student Intake & Record Visualizer</p>
+        </div>
+      </div>
+
+      <!-- Capacity pill badge -->
+      <div class="flex items-center space-x-3">
+        <div id="statusBadge" class="flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 mr-2 animate-pulse"></span>
+          <span id="capacityIndicator">0 / 5 Slots Used</span>
+        </div>
+        <button id="quickFillBtn" type="button" class="hidden sm:inline-flex items-center text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 border border-brand-200 px-3 py-1.5 rounded-lg transition-colors">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i> Prefill Sample
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notification Banner / Toast Container -->
+  <div id="toastContainer" class="fixed top-20 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Input Panel Column (5 Cols) -->
+      <section class="lg:col-span-5 bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm">
+        <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-100">
+          <div>
+            <h2 class="text-lg font-semibold text-slate-900">Add Student Record</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Supply up to 5 properties per student (Max 5 records)</p>
+          </div>
+          <div class="p-2 rounded-lg bg-slate-100 text-slate-600">
+            <i class="fa-regular fa-id-card"></i>
+          </div>
+        </div>
+
+        <!-- Form for 5 specific student inputs -->
+        <form id="studentForm" class="space-y-4" novalidate>
+          <!-- Input 1: Student Full Name -->
+          <div>
+            <label for="studentName" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              1. Full Name <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i class="fa-regular fa-user text-sm"></i>
+              </span>
+              <input type="text" id="studentName" placeholder="e.g. John Doe" required
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" />
+            </div>
+          </div>
+
+          <!-- Input 2: Student ID / Roll Number -->
+          <div>
+            <label for="studentId" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              2. Student ID / Roll Number <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i class="fa-solid fa-hashtag text-sm"></i>
+              </span>
+              <input type="text" id="studentId" placeholder="e.g. STU-2024-089" required
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" />
+            </div>
+          </div>
+
+          <!-- Input 3: Email Address -->
+          <div>
+            <label for="studentEmail" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              3. Institutional Email <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i class="fa-regular fa-envelope text-sm"></i>
+              </span>
+              <input type="email" id="studentEmail" placeholder="e.g. student@university.edu" required
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" />
+            </div>
+          </div>
+
+          <!-- Input 4: Grade / Academic Level -->
+          <div>
+            <label for="studentGrade" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              4. Academic Level / Class <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i class="fa-solid fa-layer-group text-sm"></i>
+              </span>
+              <select id="studentGrade" required
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition appearance-none">
+                <option value="" disabled selected>Select class or year</option>
+                <option value="Freshman (1st Year)">Freshman (1st Year)</option>
+                <option value="Sophomore (2nd Year)">Sophomore (2nd Year)</option>
+                <option value="Junior (3rd Year)">Junior (3rd Year)</option>
+                <option value="Senior (4th Year)">Senior (4th Year)</option>
+                <option value="Graduate Scholar">Graduate Scholar</option>
+              </select>
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-400">
+                <i class="fa-solid fa-chevron-down text-xs"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Input 5: Department / Major -->
+          <div>
+            <label for="studentMajor" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              5. Department / Major <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                <i class="fa-solid fa-shapes text-sm"></i>
+              </span>
+              <input type="text" id="studentMajor" placeholder="e.g. Computer Science & AI" required
+                class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition" />
+            </div>
+          </div>
+
+          <div class="pt-3 flex items-center space-x-3">
+            <button id="addStudentBtn" type="submit"
+              class="flex-1 inline-flex items-center justify-center px-4 py-3 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-medium text-sm rounded-xl shadow-md shadow-brand-500/20 transition duration-150">
+              <i class="fa-solid fa-plus mr-2 text-xs"></i> Add Student
+            </button>
+            <button id="resetFormBtn" type="button"
+              class="px-4 py-3 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 text-sm font-medium rounded-xl transition duration-150" title="Reset Inputs">
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+        </form>
+
+        <!-- Slot progress bar -->
+        <div class="mt-6 pt-5 border-t border-slate-100">
+          <div class="flex items-center justify-between text-xs text-slate-500 mb-1.5 font-medium">
+            <span>Storage Capacity</span>
+            <span id="capacityPercentageText">0% Full</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div id="capacityBar" class="h-full bg-brand-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="lg:col-span-7">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-7 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-100">
+            <div>
+              <h2 class="text-lg font-semibold text-slate-900">Registered Student Blocks</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Stored inside JavaScript array <code class="bg-slate-100 px-1 py-0.5 rounded text-brand-600 font-mono text-[11px]">students[]</code></p>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <button id="clearAllBtn" type="button" class="hidden text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-lg border border-rose-200 transition-colors">
+                <i class="fa-regular fa-trash-can mr-1"></i> Clear All
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State Container -->
+          <div id="emptyState" class="py-14 text-center px-4">
+            <div class="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400">
+              <i class="fa-solid fa-folder-open text-2xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-700 mb-1">No Student Records Yet</h3>
+            <p class="text-sm text-slate-400 max-w-sm mx-auto">
+              Fill out the 5 input parameters on the left and submit to generate your first student block.
+            </p>
+          </div>
+
+          <!-- Student Blocks Grid Display -->
+          <div id="studentsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+            <!-- Dynamic student cards injected via JavaScript -->
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <span>Array-Driven Client-Side Storage Demo &bull; Javascript ES6+</span>
+      <span class="flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i> Max Constraint: 5 Blocks Max
+      </span>
+    </div>
+  </footer>
+
+  <script>
+    // Maximum students allowed as requested
+    const MAX_STUDENTS = 5;
+
+    // JavaScript array to store student objects
+    let students = [];
+
+    // Pre-crafted sample data for quick prefill testing
+    const samplePool = [
+      { name: "Sophia Martinez", id: "STU-2024-101", email: "sophia.m@edu.org", grade: "Junior (3rd Year)", major: "Software Engineering" },
+      { name: "Liam Chen", id: "STU-2024-102", email: "liam.chen@edu.org", grade: "Senior (4th Year)", major: "Artificial Intelligence" },
+      { name: "Amina Yusuf", id: "STU-2024-103", email: "amina.y@edu.org", grade: "Freshman (1st Year)", major: "Data Analytics" },
+      { name: "Marcus Vance", id: "STU-2024-104", email: "marcus.v@edu.org", grade: "Sophomore (2nd Year)", major: "Cybersecurity" },
+      { name: "Elena Rostova", id: "STU-2024-105", email: "elena.r@edu.org", grade: "Graduate Scholar", major: "Computational Biology" }
+    ];
+
+    // DOM Elements
+    const studentForm = document.getElementById('studentForm');
+    const inputName = document.getElementById('studentName');
+    const inputId = document.getElementById('studentId');
+    const inputEmail = document.getElementById('studentEmail');
+    const inputGrade = document.getElementById('studentGrade');
+    const inputMajor = document.getElementById('studentMajor');
+    const addStudentBtn = document.getElementById('addStudentBtn');
+    const resetFormBtn = document.getElementById('resetFormBtn');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    const quickFillBtn = document.getElementById('quickFillBtn');
+    const studentsGrid = document.getElementById('studentsGrid');
+    const emptyState = document.getElementById('emptyState');
+    const capacityIndicator = document.getElementById('capacityIndicator');
+    const capacityBar = document.getElementById('capacityBar');
+    const capacityPercentageText = document.getElementById('capacityPercentageText');
+    const statusBadge = document.getElementById('statusBadge');
+    const toastContainer = document.getElementById('toastContainer');
+
+    /* Color scheme palette for distinctive student blocks */
+    const cardGradients = [
+      { bg: 'from-blue-500 to-indigo-600', badge: 'bg-blue-100 text-blue-700', icon: 'fa-user-astronaut' },
+      { bg: 'from-violet-500 to-purple-600', badge: 'bg-purple-100 text-purple-700', icon: 'fa-user-tie' },
+      { bg: 'from-emerald-500 to-teal-600', badge: 'bg-teal-100 text-teal-700', icon: 'fa-user-graduate' },
+      { bg: 'from-amber-500 to-orange-600', badge: 'bg-amber-100 text-amber-800', icon: 'fa-user-ninja' },
+      { bg: 'from-rose-500 to-pink-600', badge: 'bg-rose-100 text-rose-700', icon: 'fa-user-shield' }
+    ];
+
+    function showNotification(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${
+        type === 'success' ? 'bg-white border-emerald-200 text-slate-800 shadow-emerald-500/10' :
+        type === 'error' ? 'bg-white border-rose-200 text-slate-800 shadow-rose-500/10' :
+        'bg-white border-slate-200 text-slate-800 shadow-slate-500/10'
+      }`;
+
+      const iconMap = {
+        success: '<i class="fa-solid fa-circle-check text-emerald-500 text-base"></i>',
+        error: '<i class="fa-solid fa-circle-exclamation text-rose-500 text-base"></i>',
+        info: '<i class="fa-solid fa-circle-info text-brand-500 text-base"></i>'
+      };
+
+      toast.innerHTML = `
+        ${iconMap[type] || iconMap.info}
+        <span class="flex-1">${message}</span>
+      `;
+
+      toastContainer.appendChild(toast);
+
+      // Trigger appearance animation
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 20);
+
+      // Auto dismiss after 3 seconds
+      setTimeout(() => {
+        toast.classList.add('opacity-0', '-translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function renderStudents() {
+      // Clear current grid content
+      studentsGrid.innerHTML = '';
+
+      if (students.length === 0) {
+        emptyState.classList.remove('hidden');
+        studentsGrid.classList.add('hidden');
+        clearAllBtn.classList.add('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+        studentsGrid.classList.remove('hidden');
+        clearAllBtn.classList.remove('hidden');
+
+        // Loop over the students array and render blocks
+        students.forEach((student, index) => {
+          const styleConfig = cardGradients[index % cardGradients.length];
+
+          const card = document.createElement('article');
+          card.className = "card-animate relative bg-white border border-slate-200/90 rounded-2xl shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col justify-between";
+
+          card.innerHTML = `
+            <!-- Top Banner Header -->
+            <div class="h-20 bg-gradient-to-r ${styleConfig.bg} p-4 flex items-center justify-between text-white">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-white border border-white/20">
+                  <i class="fa-solid ${styleConfig.icon} text-sm"></i>
+                </div>
+                <div>
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-white/80">Slot #${index + 1}</span>
+                  <p class="text-xs font-mono font-medium tracking-tight text-white/95">${escapeHtml(student.id)}</p>
+                </div>
+              </div>
+              <!-- Delete Button -->
+              <button onclick="removeStudent(${student.idNum})" aria-label="Delete entry" class="text-white/70 hover:text-white hover:bg-white/20 p-2 rounded-lg transition-colors text-sm">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+
+            <!-- Card Body / Student Details -->
+            <div class="p-5 flex-1 flex flex-col justify-between">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 truncate leading-snug" title="${escapeHtml(student.name)}">
+                  ${escapeHtml(student.name)}
+                </h3>
+                
+                <div class="mt-2.5 flex flex-wrap gap-1.5 items-center">
+                  <span class="inline-flex items-center text-xs font-medium px-2.5 py-0.5 rounded-md ${styleConfig.badge}">
+                    <i class="fa-solid fa-tag mr-1 text-[10px]"></i> ${escapeHtml(student.grade)}
+                  </span>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs">
+                  <div class="flex items-center text-slate-600">
+                    <span class="w-5 text-slate-400"><i class="fa-regular fa-envelope"></i></span>
+                    <a href="mailto:${escapeHtml(student.email)}" class="hover:text-brand-600 truncate underline-offset-2 hover:underline">
+                      ${escapeHtml(student.email)}
+                    </a>
+                  </div>
+                  <div class="flex items-center text-slate-600">
+                    <span class="w-5 text-slate-400"><i class="fa-solid fa-book-open"></i></span>
+                    <span class="truncate font-medium text-slate-700">${escapeHtml(student.major)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Footer Metadata -->
+              <div class="mt-4 pt-3 border-t border-slate-100 text-[10px] text-slate-400 flex items-center justify-between">
+                <span>Created: ${student.timestamp}</span>
+                <span class="font-mono">#0${index + 1} of 05</span>
+              </div>
+            </div>
+          `;
+
+          studentsGrid.appendChild(card);
+        });
+      }
+
+      updateCapacityMetrics();
+    }
+
+    // Helper to sanitize HTML content to prevent XSS
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function updateCapacityMetrics() {
+      const count = students.length;
+      capacityIndicator.textContent = `${count} / ${MAX_STUDENTS} Slots Used`;
+      
+      const pct = (count / MAX_STUDENTS) * 100;
+      capacityBar.style.width = `${pct}%`;
+      capacityPercentageText.textContent = `${Math.round(pct)}% Full`;
+
+      // Update badge aesthetics
+      if (count >= MAX_STUDENTS) {
+        statusBadge.className = "flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200 transition-all";
+        capacityBar.className = "h-full bg-rose-500 rounded-full transition-all duration-300";
+        addStudentBtn.disabled = true;
+        addStudentBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        statusBadge.className = "flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 transition-all";
+        capacityBar.className = "h-full bg-brand-500 rounded-full transition-all duration-300";
+        addStudentBtn.disabled = false;
+        addStudentBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    // Remove student by unique internal id
+    window.removeStudent = function(studentIdNum) {
+      const initialCount = students.length;
+      students = students.filter(s => s.idNum !== studentIdNum);
+      if (students.length < initialCount) {
+        showNotification("Student card removed.", "info");
+        renderStudents();
+      }
+    };
+
+    studentForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      // Check max limit constraint
+      if (students.length >= MAX_STUDENTS) {
+        showNotification("Maximum limit of 5 students reached. Delete one to add more.", "error");
+        return;
+      }
+
+      // Gather input values
+      const name = inputName.value.trim();
+      const id = inputId.value.trim();
+      const email = inputEmail.value.trim();
+      const grade = inputGrade.value;
+      const major = inputMajor.value.trim();
+
+      // Validations
+      if (!name || !id || !email || !grade || !major) {
+        showNotification("Please fill out all 5 fields.", "error");
+        return;
+      }
+
+      // Simple email regex validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showNotification("Please enter a valid email address.", "error");
+        inputEmail.focus();
+        return;
+      }
+
+      // Check duplicate ID in array
+      const idExists = students.some(s => s.id.toLowerCase() === id.toLowerCase());
+      if (idExists) {
+        showNotification(`Student ID '${id}' is already registered!`, "error");
+        inputId.focus();
+        return;
+      }
+
+      // Construct student object
+      const newStudent = {
+        idNum: Date.now() + Math.random(),
+        name,
+        id,
+        email,
+        grade,
+        major,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      // Push to JavaScript array
+      students.push(newStudent);
+
+      // Refresh view
+      renderStudents();
+      showNotification(`Added ${name} successfully!`, "success");
+
+      // Reset form fields
+      studentForm.reset();
+      inputName.focus();
+    });
+
+    // Reset Form button action
+    resetFormBtn.addEventListener('click', () => {
+      studentForm.reset();
+      inputName.focus();
+    });
+
+    // Clear all entries action
+    clearAllBtn.addEventListener('click', () => {
+      if (students.length === 0) return;
+      students = [];
+      renderStudents();
+      showNotification("All student records have been cleared.", "info");
+    });
+
+    // Prefill button for testing
+    quickFillBtn.addEventListener('click', () => {
+      if (students.length >= MAX_STUDENTS) {
+        showNotification("List is already at capacity (5/5).", "info");
+        return;
+      }
+
+      // Pick a sample not currently present
+      const available = samplePool.find(sample => !students.some(s => s.id === sample.id));
+
+      if (available) {
+        inputName.value = available.name;
+        inputId.value = available.id;
+        inputEmail.value = available.email;
+        inputGrade.value = available.grade;
+        inputMajor.value = available.major;
+        showNotification("Sample data filled into the form. Hit 'Add Student'!", "info");
+      } else {
+        // Fallback generic generator
+        const nextNum = students.length + 1;
+        inputName.value = `Student ${nextNum}`;
+        inputId.value = `STU-2024-00${nextNum}`;
+        inputEmail.value = `student${nextNum}@university.edu`;
+        inputGrade.value = "Freshman (1st Year)";
+        inputMajor.value = "General Sciences";
+        showNotification("Generated placeholder student details.", "info");
+      }
+    });
+
+    // Initial render call on load
+    renderStudents();
+  </script>
+</body>
+</html>
